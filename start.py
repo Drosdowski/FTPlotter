@@ -3,6 +3,7 @@
 #
 import sys
 import ftrobopy                                              # Import the ftrobopy module
+from command import Command
 from TouchStyle import *
 
 class FtcGuiApplication(TouchApplication):
@@ -49,12 +50,15 @@ class FtcGuiApplication(TouchApplication):
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
             self.txt.setConfig(M, I)
             self.txt.updateConfig()
+            self.counter_pen = 0
+            self.counter_x = 0
+            self.counter_y = 0
 
             self.timer = QTimer(self)                        # create a timer
             self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
             self.timer.start(100)                            # fire timer every 100ms (10 hz)
 
-            self.robot_mode = 'START_X'
+            self.robot_mode = [Command.START_POS_X, Command.START_POS_Y, Command.START_POS_PEN, Command.TO_MIDDLE_X, Command.TO_MIDDLE_Y]
 
         w.centralWidget.setLayout(vbox)
         w.show()
@@ -63,7 +67,7 @@ class FtcGuiApplication(TouchApplication):
     # an event handler for our button (called a "slot" in qt)
     # it will be called whenever the user clicks the button
     def on_button_clicked(self):
-        self.robot_mode = "NOT_AUS"
+        self.robot_mode = [Command.STOP]
         self.txt.setPwm(0, 0)
         self.txt.setPwm(1, 0)
         self.txt.setPwm(2, 0)
@@ -71,19 +75,25 @@ class FtcGuiApplication(TouchApplication):
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
-        if self.robot_mode == 'START_X':
+        if self.robot_mode[0] == Command.START_POS_X:
             print('START_X')
             self.start_position_x()
-        if self.robot_mode == 'START_Y':
+        if self.robot_mode[0] == Command.START_POS_Y:
             print('START_Y')
             self.start_position_y()
-        if self.robot_mode == 'START_PEN':
+        if self.robot_mode[0] == Command.START_POS_PEN:
             print('START_PEN')
             self.start_position_pen()
-        if self.robot_mode == 'STOP':
+        if self.robot_mode[0] == Command.STOP:
             print('STOP')
-        if self.robot_mode == 'NOT-AUS':
-            print('NOT-AUS')
+        if self.robot_mode[0] == Command.TO_MIDDLE_X:
+            print('TO_MIDDLE_X')
+            self.centre_position_x()
+        if self.robot_mode[0] == Command.TO_MIDDLE_Y:
+            print('TO_MIDDLE_Y')
+            self.centre_position_y()
+        print('>>', self.robot_mode[0])
+
 
     def start_position_x(self):
         if self.get_switch_state(0) == 0:
@@ -97,25 +107,58 @@ class FtcGuiApplication(TouchApplication):
             self.txt.setPwm(2, 0)
 
         if self.get_switch_state(0) == 1 and self.get_switch_state(1) == 1:
-            self.robot_mode = 'START_Y'
+            self.next_command()
 
     def start_position_y(self):
         if self.get_switch_state(2) == 0:
             self.txt.setPwm(4, 512)
         if self.get_switch_state(2) == 1:
             self.txt.setPwm(4, 0)
-            self.robot_mode = 'START_PEN'
+            self.next_command()
 
     def start_position_pen(self):
         if self.get_switch_state(6) == 0:
             self.txt.setPwm(6, 512)
         if self.get_switch_state(6) == 1:
             self.txt.setPwm(6, 0)
-            self.robot_mode = 'STOP'
+            self.counter_pen = 0
+            self.next_command()
+
+    def end_position_pen(self):
+        self.counter_pen += 1
+        if self.counter_pen < 3:
+            self.txt.setPwm(7, 512)
+        else:
+            self.txt.setPwm(7, 0)
+            self.next_command()
+
+    def centre_position_x(self):
+        self.counter_x += 1
+        if self.counter_x < 40:
+            self.txt.setPwm(1, 512)
+            self.txt.setPwm(3, 512)
+        else:
+            self.txt.setPwm(1, 0)
+            self.txt.setPwm(3, 0)
+            self.counter_x = 0
+            self.next_command()
+
+    def centre_position_y(self):
+        self.counter_y += 1
+        if self.counter_y < 40:
+            self.txt.setPwm(5, 512)
+        else:
+            self.txt.setPwm(5, 0)
+            self.counter_y = 0
+            self.next_command()
+
 
     def get_switch_state(self, number):
         return self.txt.getCurrentInput(number)
 
+
+    def next_command(self):
+        self.robot_mode.remove(self.robot_mode[0])
 
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)
