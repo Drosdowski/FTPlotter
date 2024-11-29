@@ -6,3 +6,4 @@ class Command:
     END_POS_PEN = 4
     TO_MIDDLE_X = 5
     TO_MIDDLE_Y = 6
+    MOVE_VECTOR = 7

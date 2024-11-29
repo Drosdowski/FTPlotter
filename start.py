@@ -50,7 +50,7 @@ class FtcGuiApplication(TouchApplication):
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
             self.txt.setConfig(M, I)
             self.txt.updateConfig()
-            self.counter_pen = 0
+            self.counter_z = 0
             self.counter_x = 0
             self.counter_y = 0
 
@@ -58,7 +58,11 @@ class FtcGuiApplication(TouchApplication):
             self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
             self.timer.start(100)                            # fire timer every 100ms (10 hz)
 
-            self.robot_mode = [Command.START_POS_X, Command.START_POS_Y, Command.START_POS_PEN, Command.TO_MIDDLE_X, Command.TO_MIDDLE_Y]
+            self.robot_mode = [{Command.START_POS_X, 0, 0}, {Command.START_POS_Y, 0, 0}, {Command.START_POS_PEN, 0, 0}, {Command.TO_MIDDLE_X, 0, 0}, {Command.TO_MIDDLE_Y, 0, 0}]
+            self.robot_mode += [{Command.MOVE_VECTOR, 5, 0}, {Command.MOVE_VECTOR, 0, 5}, {Command.MOVE_VECTOR, -5, 0},{Command.MOVE_VECTOR, 0, -5}]
+            self.robot_mode += [{Command.END_POS_PEN, 0, 0}]
+            self.robot_mode += [{Command.MOVE_VECTOR, 10, 0}, {Command.MOVE_VECTOR, 0, 10}, {Command.MOVE_VECTOR, -10, 0},{Command.MOVE_VECTOR, 0, -10}]
+            self.robot_mode += [{Command.START_POS_PEN, 0, 0}]
 
         w.centralWidget.setLayout(vbox)
         w.show()
@@ -121,20 +125,20 @@ class FtcGuiApplication(TouchApplication):
             self.txt.setPwm(6, 512)
         if self.get_switch_state(6) == 1:
             self.txt.setPwm(6, 0)
-            self.counter_pen = 0
+            self.counter_z = 0
             self.next_command()
 
     def end_position_pen(self):
-        self.counter_pen += 1
-        if self.counter_pen < 3:
+        self.counter_z += 1
+        if self.counter_z < 3:
             self.txt.setPwm(7, 512)
         else:
             self.txt.setPwm(7, 0)
             self.next_command()
 
     def centre_position_x(self):
-        self.counter_x += 1
         if self.counter_x < 40:
+            self.counter_x += 1
             self.txt.setPwm(1, 512)
             self.txt.setPwm(3, 512)
         else:
@@ -144,8 +148,8 @@ class FtcGuiApplication(TouchApplication):
             self.next_command()
 
     def centre_position_y(self):
-        self.counter_y += 1
         if self.counter_y < 40:
+            self.counter_y += 1
             self.txt.setPwm(5, 512)
         else:
             self.txt.setPwm(5, 0)
@@ -159,6 +163,27 @@ class FtcGuiApplication(TouchApplication):
 
     def next_command(self):
         self.robot_mode.remove(self.robot_mode[0])
+
+    def draw_vector(self, x, y):
+        max_val = max(x,y)
+        spd_x = 512 / max_val * abs(x)
+        spd_y = 512 / max_val * abs(y)
+
+        if x < self.counter_x:
+            self.counter_x += 1
+            self.txt.setPwm(1, spd_x)
+            self.txt.setPwm(3, spd_x)
+        else:
+            self.txt.setPwm(1, 0)
+            self.txt.setPwm(3, 0)
+        if y < self.counter_y:
+            self.counter_y += 1
+            self.txt.setPwm(5, spd_y)
+        else:
+            self.txt.setPwm(5, 0)
+
+        if x >= self.counter_x and y >= self.counter_y:
+            self.next_command()
 
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)
