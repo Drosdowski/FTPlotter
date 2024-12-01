@@ -58,11 +58,14 @@ class FtcGuiApplication(TouchApplication):
             self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
             self.timer.start(100)                            # fire timer every 100ms (10 hz)
 
-            self.robot_mode = [{Command.START_POS_X, 0, 0}, {Command.START_POS_Y, 0, 0}, {Command.START_POS_PEN, 0, 0}, {Command.TO_MIDDLE_X, 0, 0}, {Command.TO_MIDDLE_Y, 0, 0}]
-            self.robot_mode += [{Command.MOVE_VECTOR, 5, 0}, {Command.MOVE_VECTOR, 0, 5}, {Command.MOVE_VECTOR, -5, 0},{Command.MOVE_VECTOR, 0, -5}]
-            self.robot_mode += [{Command.END_POS_PEN, 0, 0}]
-            self.robot_mode += [{Command.MOVE_VECTOR, 10, 0}, {Command.MOVE_VECTOR, 0, 10}, {Command.MOVE_VECTOR, -10, 0},{Command.MOVE_VECTOR, 0, -10}]
-            self.robot_mode += [{Command.START_POS_PEN, 0, 0}]
+            self.robot_mode = [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)], [Command.START_POS_PEN, (0, 0)]]
+            self.robot_mode += [[Command.TO_MIDDLE_X, (0, 0)], [Command.TO_MIDDLE_Y, (0, 0)]]
+            self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
+            self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
+            self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
+            self.robot_mode += [[Command.START_POS_PEN, (0, 0)]]
+
+            print (self.robot_mode)
 
         w.centralWidget.setLayout(vbox)
         w.show()
@@ -79,25 +82,28 @@ class FtcGuiApplication(TouchApplication):
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
-        if self.robot_mode[0] == Command.START_POS_X:
+        current_command = list(self.robot_mode[0])[0]
+        if current_command == Command.START_POS_X:
             print('START_X')
             self.start_position_x()
-        if self.robot_mode[0] == Command.START_POS_Y:
+        if current_command == Command.START_POS_Y:
             print('START_Y')
             self.start_position_y()
-        if self.robot_mode[0] == Command.START_POS_PEN:
+        if current_command== Command.START_POS_PEN:
             print('START_PEN')
             self.start_position_pen()
-        if self.robot_mode[0] == Command.STOP:
+        if current_command == Command.STOP:
             print('STOP')
-        if self.robot_mode[0] == Command.TO_MIDDLE_X:
+        if current_command == Command.TO_MIDDLE_X:
             print('TO_MIDDLE_X')
             self.centre_position_x()
-        if self.robot_mode[0] == Command.TO_MIDDLE_Y:
+        if current_command == Command.TO_MIDDLE_Y:
             print('TO_MIDDLE_Y')
             self.centre_position_y()
-        print('>>', self.robot_mode[0])
-
+        if current_command == Command.MOVE_VECTOR:
+            print('MOVE')
+            pos = list(self.robot_mode[0])[1]
+            self.draw_vector(pos[0], pos[1])
 
     def start_position_x(self):
         if self.get_switch_state(0) == 0:
@@ -162,6 +168,9 @@ class FtcGuiApplication(TouchApplication):
 
 
     def next_command(self):
+        self.counter_x = 0
+        self.counter_y = 0
+        self.counter_z = 0
         self.robot_mode.remove(self.robot_mode[0])
 
     def draw_vector(self, x, y):
@@ -169,14 +178,16 @@ class FtcGuiApplication(TouchApplication):
         spd_x = 512 / max_val * abs(x)
         spd_y = 512 / max_val * abs(y)
 
-        if x < self.counter_x:
+        print("vector ", spd_x, spd_y, self.counter_x, self.counter_y, x, y)
+
+        if x > self.counter_x:
             self.counter_x += 1
             self.txt.setPwm(1, spd_x)
             self.txt.setPwm(3, spd_x)
         else:
             self.txt.setPwm(1, 0)
             self.txt.setPwm(3, 0)
-        if y < self.counter_y:
+        if y > self.counter_y:
             self.counter_y += 1
             self.txt.setPwm(5, spd_y)
         else:
