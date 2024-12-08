@@ -15,7 +15,7 @@ class FtcGuiApplication(TouchApplication):
 
         txt_ip = os.environ.get('TXT_IP')                    # try to read TXT_IP environment variable
         try:
-            self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000, 0.100, "192.168.178.34") # connect to TXT's IO controller
+            self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000, 0.100, "192.168.178.34", ) # connect to TXT's IO controller
         except:
             self.txt = None
 
@@ -23,7 +23,7 @@ class FtcGuiApplication(TouchApplication):
 
 
         if not self.txt:
-            # display error of TXT could no be connected
+            # display error of TXT could not be connected
             # error messages is centered and may span
             # over several lines
             err_msg = QLabel("Error connecting IO server")   # create the error message label
@@ -38,7 +38,7 @@ class FtcGuiApplication(TouchApplication):
             vbox.addWidget(button)                           # attach it to the main output area
 
             # configure all TXT outputs to normal mode
-            M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
+            M = [ self.txt.C_MOTOR, self.txt.C_MOTOR, self.txt.C_MOTOR, self.txt.C_MOTOR ]
             I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
@@ -47,6 +47,8 @@ class FtcGuiApplication(TouchApplication):
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
                   (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
+
+
             self.txt.setConfig(M, I)
             self.txt.updateConfig()
             self.counter_z = 0
@@ -56,6 +58,11 @@ class FtcGuiApplication(TouchApplication):
             self.timer = QTimer(self)                        # create a timer
             self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
             self.timer.start(100)                            # fire timer every 100ms (10 hz)
+
+            self.m1 = self.txt.motor(1)
+            self.m2 = self.txt.motor(2)
+            self.m3 = self.txt.motor(3)
+            self.m4 = self.txt.motor(4)
 
             self.robot_mode = []
             self.robot_mode += [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)], [Command.START_POS_PEN, (0, 0)]]
@@ -75,15 +82,10 @@ class FtcGuiApplication(TouchApplication):
     # it will be called whenever the user clicks the button
     def on_button_clicked(self):
         self.robot_mode = [Command.STOP]
-        self.txt.setPwm(0, 0)
-        self.txt.setPwm(1, 0)
-        self.txt.setPwm(2, 0)
-        self.txt.setPwm(3, 0)
-        self.txt.setPwm(4, 0)
-        self.txt.setPwm(5, 0)
-        self.txt.setPwm(6, 0)
-        self.txt.setPwm(7, 0)
-        self.txt.setPwm(8, 0)
+        self.m1.setSpeed(0)
+        self.m2.setSpeed(0)
+        self.m3.setSpeed(0)
+        self.m4.setSpeed(0)
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
@@ -115,59 +117,59 @@ class FtcGuiApplication(TouchApplication):
 
     def start_position_x(self):
         if self.get_switch_state(0) == 0:
-            self.txt.setPwm(0, 512)
+            self.m1.setSpeed(512)
         else:
-            self.txt.setPwm(0, 0)
+            self.m1.setSpeed(0)
 
         if self.get_switch_state(1) == 0:
-            self.txt.setPwm(2, 512)
+            self.m2.setSpeed(512)
         else:
-            self.txt.setPwm(2, 0)
+            self.m2.setSpeed(0)
 
         if self.get_switch_state(0) == 1 and self.get_switch_state(1) == 1:
             self.next_command()
 
     def start_position_y(self):
         if self.get_switch_state(2) == 0:
-            self.txt.setPwm(4, 512)
+            self.m3.setSpeed(512)
         if self.get_switch_state(2) == 1:
-            self.txt.setPwm(4, 0)
+            self.m3.setSpeed(0)
             self.next_command()
 
     def start_position_pen(self):
         print('Switch= ', self.get_switch_state(6))
         if self.get_switch_state(6) == 0:
-            self.txt.setPwm(6, 256)
+            self.m4.setSpeed(256)
         if self.get_switch_state(6) == 1:
-            self.txt.setPwm(6, 0)
+            self.m4.setSpeed(0)
             self.counter_z = 0
             self.next_command()
 
     def end_position_pen(self):
         self.counter_z += 1
         if self.counter_z < 3:
-            self.txt.setPwm(7, 128)
+            self.m4.setSpeed(-128)
         else:
-            self.txt.setPwm(7, 0)
+            self.m4.setSpeed(0)
             self.next_command()
 
     def centre_position_x(self):
         if self.counter_x < 40:
             self.counter_x += 1
-            self.txt.setPwm(1, 512)
-            self.txt.setPwm(3, 512)
+            self.m1.setSpeed(-512)
+            self.m2.setSpeed(-512)
         else:
-            self.txt.setPwm(1, 0)
-            self.txt.setPwm(3, 0)
+            self.m1.setSpeed(0)
+            self.m2.setSpeed(0)
             self.counter_x = 0
             self.next_command()
 
     def centre_position_y(self):
         if self.counter_y < 40:
             self.counter_y += 1
-            self.txt.setPwm(5, 512)
+            self.m3.setSpeed(-512)
         else:
-            self.txt.setPwm(5, 0)
+            self.m3.setSpeed(0)
             self.counter_y = 0
             self.next_command()
 
@@ -185,23 +187,23 @@ class FtcGuiApplication(TouchApplication):
 
     def draw_vector(self, x, y):
         max_val = max(x,y)
-        spd_x = (int)(512 / max_val * abs(x))
-        spd_y = (int)(512 / max_val * abs(y))
+        spd_x = int(512 / max_val * abs(x))
+        spd_y = int(512 / max_val * abs(y))
 
         print("vector ", spd_x, spd_y, self.counter_x, self.counter_y, x, y)
 
         if x > self.counter_x:
             self.counter_x += 1
-            self.txt.setPwm(1, spd_x)
-            self.txt.setPwm(3, spd_x)
+            self.m1.setSpeed(spd_x)
+            self.m2.setSpeed(spd_x)
         else:
-            self.txt.setPwm(1, 0)
-            self.txt.setPwm(3, 0)
+            self.m1.setSpeed(0)
+            self.m2.setSpeed(0)
         if y > self.counter_y:
             self.counter_y += 1
-            self.txt.setPwm(5, spd_y)
+            self.m3.setSpeed(spd_y)
         else:
-            self.txt.setPwm(5, 0)
+            self.m3.setSpeed(0)
 
         if x >= self.counter_x and y >= self.counter_y:
             self.next_command()
