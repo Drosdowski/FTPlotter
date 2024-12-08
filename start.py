@@ -15,13 +15,12 @@ class FtcGuiApplication(TouchApplication):
 
         txt_ip = os.environ.get('TXT_IP')                    # try to read TXT_IP environment variable
         try:
-            self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000) # connect to TXT's IO controller
+            self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000, 0.100, "192.168.178.34") # connect to TXT's IO controller
         except:
             self.txt = None
 
         vbox = QVBoxLayout()
 
-        # share of C:\Users\micha\PycharmProjects <-->
 
         if not self.txt:
             # display error of TXT could no be connected
@@ -58,10 +57,11 @@ class FtcGuiApplication(TouchApplication):
             self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
             self.timer.start(100)                            # fire timer every 100ms (10 hz)
 
-            self.robot_mode = [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)], [Command.START_POS_PEN, (0, 0)]]
-            self.robot_mode += [[Command.TO_MIDDLE_X, (0, 0)], [Command.TO_MIDDLE_Y, (0, 0)]]
-            self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
+            self.robot_mode = []
+            self.robot_mode += [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)], [Command.START_POS_PEN, (0, 0)]]
+            self.robot_mode += [[Command.TO_MIDDLE_Y, (0, 0)], [Command.TO_MIDDLE_X, (0, 0)] ]
             self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
+            # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
             self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
             self.robot_mode += [[Command.START_POS_PEN, (0, 0)]]
 
@@ -79,6 +79,11 @@ class FtcGuiApplication(TouchApplication):
         self.txt.setPwm(1, 0)
         self.txt.setPwm(2, 0)
         self.txt.setPwm(3, 0)
+        self.txt.setPwm(4, 0)
+        self.txt.setPwm(5, 0)
+        self.txt.setPwm(6, 0)
+        self.txt.setPwm(7, 0)
+        self.txt.setPwm(8, 0)
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
@@ -92,6 +97,9 @@ class FtcGuiApplication(TouchApplication):
         if current_command== Command.START_POS_PEN:
             print('START_PEN')
             self.start_position_pen()
+        if current_command== Command.END_POS_PEN:
+            print('END_PEN')
+            self.end_position_pen()
         if current_command == Command.STOP:
             print('STOP')
         if current_command == Command.TO_MIDDLE_X:
@@ -127,8 +135,9 @@ class FtcGuiApplication(TouchApplication):
             self.next_command()
 
     def start_position_pen(self):
+        print('Switch= ', self.get_switch_state(6))
         if self.get_switch_state(6) == 0:
-            self.txt.setPwm(6, 512)
+            self.txt.setPwm(6, 256)
         if self.get_switch_state(6) == 1:
             self.txt.setPwm(6, 0)
             self.counter_z = 0
@@ -137,7 +146,7 @@ class FtcGuiApplication(TouchApplication):
     def end_position_pen(self):
         self.counter_z += 1
         if self.counter_z < 3:
-            self.txt.setPwm(7, 512)
+            self.txt.setPwm(7, 128)
         else:
             self.txt.setPwm(7, 0)
             self.next_command()
@@ -172,11 +181,12 @@ class FtcGuiApplication(TouchApplication):
         self.counter_y = 0
         self.counter_z = 0
         self.robot_mode.remove(self.robot_mode[0])
+        print('next: ', self.robot_mode[0])
 
     def draw_vector(self, x, y):
         max_val = max(x,y)
-        spd_x = 512 / max_val * abs(x)
-        spd_y = 512 / max_val * abs(y)
+        spd_x = (int)(512 / max_val * abs(x))
+        spd_y = (int)(512 / max_val * abs(y))
 
         print("vector ", spd_x, spd_y, self.counter_x, self.counter_y, x, y)
 
