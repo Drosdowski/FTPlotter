@@ -111,8 +111,8 @@ class FtcGuiApplication(TouchApplication):
             print('TO_MIDDLE_Y')
             self.centre_position_y()
         if current_command == Command.MOVE_VECTOR:
-            print('MOVE')
             pos = list(self.robot_mode[0])[1]
+            print('MOVE', pos[0], ' / ', pos[1])
             self.draw_vector(pos[0], pos[1])
 
     def start_position_x(self):
@@ -186,26 +186,31 @@ class FtcGuiApplication(TouchApplication):
         print('next: ', self.robot_mode[0])
 
     def draw_vector(self, x, y):
-        max_val = max(x,y)
-        spd_x = int(512 / max_val * abs(x))
-        spd_y = int(512 / max_val * abs(y))
+        # calculate speed on x/y for a time interval
+        ax = abs(x)
+        ay = abs(y)
+        max_val = max(ax, ay)
+        spd_x = int(512 / max_val * ax)
+        spd_y = int(512 / max_val * ay)
+        if x < 0: spd_x = -spd_x
+        if y < 0: spd_y = -spd_y
 
         print("vector ", spd_x, spd_y, self.counter_x, self.counter_y, x, y)
 
-        if x > self.counter_x:
+        if ax > self.counter_x:
             self.counter_x += 1
             self.m1.setSpeed(spd_x)
             self.m2.setSpeed(spd_x)
         else:
             self.m1.setSpeed(0)
             self.m2.setSpeed(0)
-        if y > self.counter_y:
+        if ay > self.counter_y:
             self.counter_y += 1
             self.m3.setSpeed(spd_y)
         else:
             self.m3.setSpeed(0)
 
-        if x >= self.counter_x and y >= self.counter_y:
+        if ax <= self.counter_x and ay <= self.counter_y:
             self.next_command()
 
 if __name__ == "__main__":
