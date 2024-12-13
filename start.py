@@ -82,10 +82,7 @@ class FtcGuiApplication(TouchApplication):
     # it will be called whenever the user clicks the button
     def on_button_clicked(self):
         self.robot_mode = [Command.STOP]
-        self.m1.setSpeed(0)
-        self.m2.setSpeed(0)
-        self.m3.setSpeed(0)
-        self.m4.setSpeed(0)
+        self.txt.stopAll()
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
@@ -156,11 +153,15 @@ class FtcGuiApplication(TouchApplication):
     def centre_position_x(self):
         if self.counter_x < 40:
             self.counter_x += 1
+            self.txt.SyncDataBegin()
             self.m1.setSpeed(-512)
             self.m2.setSpeed(-512)
+            self.txt.SyncDataEnd()
         else:
+            self.txt.SyncDataBegin()
             self.m1.setSpeed(0)
             self.m2.setSpeed(0)
+            self.txt.SyncDataEnd()
             self.counter_x = 0
             self.next_command()
 
@@ -196,7 +197,7 @@ class FtcGuiApplication(TouchApplication):
         if y < 0: spd_y = -spd_y
 
         print("vector ", spd_x, spd_y, self.counter_x, self.counter_y, x, y)
-
+        self.txt.SyncDataBegin()
         if ax > self.counter_x:
             self.counter_x += 1
             self.m1.setSpeed(spd_x)
@@ -209,6 +210,8 @@ class FtcGuiApplication(TouchApplication):
             self.m3.setSpeed(spd_y)
         else:
             self.m3.setSpeed(0)
+
+        self.txt.SyncDataEnd()
 
         if ax <= self.counter_x and ay <= self.counter_y:
             self.next_command()
