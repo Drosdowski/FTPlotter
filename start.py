@@ -3,19 +3,30 @@
 #
 import sys
 import ftrobopy                                              # Import the ftrobopy module
-from command import Command
 from TouchStyle import *
+
+class Command:
+    STOP = 0
+    START_POS_X = 1
+    START_POS_Y = 2
+    START_POS_PEN = 3
+    END_POS_PEN = 4
+    TO_MIDDLE_X = 5
+    TO_MIDDLE_Y = 6
+    MOVE_VECTOR = 7
+    EXPLODE = 666
 
 class FtcGuiApplication(TouchApplication):
     def __init__(self, args):
         TouchApplication.__init__(self, args)
 
         # create the empty main window
-        w = TouchWindow("Tut_3_4")
+        w = TouchWindow("PLOTTER MD")
 
         txt_ip = os.environ.get('TXT_IP')                    # try to read TXT_IP environment variable
         try:
-            self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000, 0.100, "192.168.178.34", ) # connect to TXT's IO controller
+            self.txt = ftrobopy.ftrobopy("localhost", 65000, 0.100 ) # WLAN - connect to TXT's IO controller
+            # self.txt = ftrobopy.ftrobopy("192.168.178.34", 65000, 0.100, "192.168.178.34", ) # LOCAL - connect to TXT's IO controller
         except:
             self.txt = None
 
@@ -69,6 +80,7 @@ class FtcGuiApplication(TouchApplication):
             self.robot_mode += [[Command.TO_MIDDLE_Y, (0, 0)], [Command.TO_MIDDLE_X, (0, 0)] ]
             self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
             # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
+            self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
             self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
             self.robot_mode += [[Command.START_POS_PEN, (0, 0)]]
 
