@@ -15,5 +15,6 @@ python3 start.py
 
 Update File:
 Windows CMD:
+cd C:\Users\micha\PycharmProjects\FTPlotter
 scp start.py ftc@192.168.178.84:/opt/ftc/apps/user/191fe5a6-313b-4083-af65-d1ad7fd6d281/
 (FT: Confirm!)

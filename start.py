@@ -82,7 +82,7 @@ class FtcGuiApplication(TouchApplication):
             # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
             self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
             self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
-            self.robot_mode += [[Command.START_POS_PEN, (0, 0)]]
+            self.robot_mode += [[Command.START_POS_PEN, (0, 0)], [Command.STOP]]
 
             print (self.robot_mode)
 
@@ -113,6 +113,7 @@ class FtcGuiApplication(TouchApplication):
             self.end_position_pen()
         if current_command == Command.STOP:
             print('STOP')
+            self.timer.stop()
         if current_command == Command.TO_MIDDLE_X:
             print('TO_MIDDLE_X')
             self.centre_position_x()
@@ -226,6 +227,9 @@ class FtcGuiApplication(TouchApplication):
         self.txt.SyncDataEnd()
 
         if ax <= self.counter_x and ay <= self.counter_y:
+            self.m1.setSpeed(0)
+            self.m2.setSpeed(0)
+            self.m3.setSpeed(0)
             self.next_command()
 
 if __name__ == "__main__":
