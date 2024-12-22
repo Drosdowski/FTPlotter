@@ -93,7 +93,7 @@ class FtcGuiApplication(TouchApplication):
     # an event handler for our button (called a "slot" in qt)
     # it will be called whenever the user clicks the button
     def on_button_clicked(self):
-        self.robot_mode = [Command.STOP]
+        self.timer.stop()
         self.txt.stopAll()
 
     # an event handler for the timer (also a qt slot)
