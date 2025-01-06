@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+import math
 import sys
 import ftrobopy                                              # Import the ftrobopy module
 from TouchStyle import *
@@ -14,6 +15,7 @@ class Command:
     TO_MIDDLE_X = 5
     TO_MIDDLE_Y = 6
     MOVE_VECTOR = 7
+    CIRCLE = 8
     EXPLODE = 666
 
 class FtcGuiApplication(TouchApplication):
@@ -44,9 +46,13 @@ class FtcGuiApplication(TouchApplication):
         else:
             # initialization went fine. So the main gui
             # is being drawn
-            button = QPushButton("Toggle O1")                # create a button labeled "Toggle O1"
+            button = QPushButton("STOP")                # create a button labeled "Toggle O1"
             button.clicked.connect(self.on_button_clicked)   # connect button to event handler
             vbox.addWidget(button)                           # attach it to the main output area
+
+            button2 = QPushButton("GO")  # create a button labeled "Toggle O1"
+            button2.clicked.connect(self.on_button2_clicked)  # connect button to event handler
+            vbox.addWidget(button2)  # attach it to the main output area
 
             # configure all TXT outputs to normal mode
             M = [ self.txt.C_MOTOR, self.txt.C_MOTOR, self.txt.C_MOTOR, self.txt.C_MOTOR ]
@@ -62,39 +68,56 @@ class FtcGuiApplication(TouchApplication):
 
             self.txt.setConfig(M, I)
             self.txt.updateConfig()
-            self.counter_z = 0
+            self.alpha_step = math.pi / 36
             self.counter_x = 0
             self.counter_y = 0
-
-            self.timer = QTimer(self)                        # create a timer
-            self.timer.timeout.connect(self.on_timer)        # connect timer to on_timer slot
-            self.timer.start(100)                            # fire timer every 100ms (10 hz)
-
-            self.m1 = self.txt.motor(1)
-            self.m2 = self.txt.motor(2)
-            self.m3 = self.txt.motor(3)
-            self.m4 = self.txt.motor(4)
-
+            self.counter_z = 0
+            self.alpha = 0
+            self.m1 = 0
+            self.m2 = 0
+            self.m3 = 0
+            self.m4 = 0
             self.robot_mode = []
-            self.robot_mode += [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)], [Command.START_POS_PEN, (0, 0)]]
-            self.robot_mode += [[Command.TO_MIDDLE_Y, (0, 0)], [Command.TO_MIDDLE_X, (0, 0)] ]
-            self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
-            # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
-            self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
-            self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
-            self.robot_mode += [[Command.START_POS_PEN, (0, 0)], [Command.STOP]]
+            self.timer = QTimer(self)  # create a timer
+            self.timer.timeout.connect(self.on_timer)  # connect timer to on_timer slot
 
+            self.run()
             print (self.robot_mode)
 
         w.centralWidget.setLayout(vbox)
         w.show()
         self.exec_()
 
+    def run(self):
+        self.reset_counter()
+        self.alpha = 0
+
+        self.m1 = self.txt.motor(1)
+        self.m2 = self.txt.motor(2)
+        self.m3 = self.txt.motor(3)
+        self.m4 = self.txt.motor(4)
+
+        self.robot_mode = []
+        self.robot_mode += [[Command.START_POS_Y, (0, 0)], [Command.START_POS_X, (0, 0)],
+                            [Command.START_POS_PEN, (0, 0)]]
+        self.robot_mode += [[Command.TO_MIDDLE_Y, (0, 0)], [Command.TO_MIDDLE_X, (0, 0)]]
+        self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
+        self.robot_mode += [[Command.CIRCLE, (15, 10)]]
+        # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
+        # self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
+        # self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
+        self.robot_mode += [[Command.START_POS_PEN, (0, 0)], [Command.STOP]]
+
+        self.timer.start(100)  # fire timer every 100ms (10 hz)
+
     # an event handler for our button (called a "slot" in qt)
     # it will be called whenever the user clicks the button
     def on_button_clicked(self):
         self.timer.stop()
         self.txt.stopAll()
+
+    def on_button2_clicked(self):
+        self.run()
 
     # an event handler for the timer (also a qt slot)
     def on_timer(self):
@@ -120,6 +143,10 @@ class FtcGuiApplication(TouchApplication):
         if current_command == Command.TO_MIDDLE_Y:
             print('TO_MIDDLE_Y')
             self.centre_position_y()
+        if current_command == Command.CIRCLE:
+            print('CIRCLE')
+            radius = list(self.robot_mode[0])[1]
+            self.draw_circle(radius[0], radius[1])
         if current_command == Command.MOVE_VECTOR:
             pos = list(self.robot_mode[0])[1]
             print('MOVE', pos[0], ' / ', pos[1])
@@ -193,9 +220,7 @@ class FtcGuiApplication(TouchApplication):
 
 
     def next_command(self):
-        self.counter_x = 0
-        self.counter_y = 0
-        self.counter_z = 0
+        self.reset_counter()
         self.robot_mode.remove(self.robot_mode[0])
         print('next: ', self.robot_mode[0])
 
@@ -227,10 +252,30 @@ class FtcGuiApplication(TouchApplication):
         self.txt.SyncDataEnd()
 
         if ax <= self.counter_x and ay <= self.counter_y:
-            self.m1.setSpeed(0)
-            self.m2.setSpeed(0)
-            self.m3.setSpeed(0)
+            self.stop_all()
             self.next_command()
+
+    def draw_circle(self, rad_x, rad_y):
+        # draw circle - start at 0/rad_y from centre
+        self.reset_counter() # make sure, vector function doesn't decide to stop circle
+        if self.alpha <= 2*math.pi:
+            x_pos_delta = (-math.cos(self.alpha + self.alpha_step) - math.cos(self.alpha)) * rad_x
+            y_pos_delta = (-math.sin(self.alpha + self.alpha_step) - math.sin(self.alpha)) * rad_y
+            self.draw_vector(x_pos_delta, y_pos_delta)
+            self.alpha += self.alpha_step
+        else:
+            self.stop_all()
+            self.next_command()
+
+    def stop_all(self):
+        self.m1.setSpeed(0)
+        self.m2.setSpeed(0)
+        self.m3.setSpeed(0)
+
+    def reset_counter(self):
+        self.counter_x = 0
+        self.counter_y = 0
+        self.counter_z = 0
 
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)
