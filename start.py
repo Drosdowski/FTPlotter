@@ -15,7 +15,8 @@ class Command:
     TO_MIDDLE_X = 5
     TO_MIDDLE_Y = 6
     MOVE_VECTOR = 7
-    CIRCLE = 8
+    ELLIPSE = 8
+    FLOWER = 9
     EXPLODE = 666
 
 class FtcGuiApplication(TouchApplication):
@@ -69,10 +70,12 @@ class FtcGuiApplication(TouchApplication):
             self.txt.setConfig(M, I)
             self.txt.updateConfig()
             self.alpha_step = math.pi / 36
+            self.beta_step = self.alpha_step / 10
             self.counter_x = 0
             self.counter_y = 0
             self.counter_z = 0
             self.alpha = 0
+            self.beta = 0
             self.m1 = 0
             self.m2 = 0
             self.m3 = 0
@@ -91,6 +94,7 @@ class FtcGuiApplication(TouchApplication):
     def run(self):
         self.reset_counter()
         self.alpha = 0
+        self.beta = 0
 
         self.m1 = self.txt.motor(1)
         self.m2 = self.txt.motor(2)
@@ -102,7 +106,8 @@ class FtcGuiApplication(TouchApplication):
                             [Command.START_POS_PEN, (0, 0)]]
         self.robot_mode += [[Command.TO_MIDDLE_Y, (0, 0)], [Command.TO_MIDDLE_X, (0, 0)]]
         self.robot_mode += [[Command.END_POS_PEN, (0, 0)]]
-        self.robot_mode += [[Command.CIRCLE, (15, 10)]]
+        # self.robot_mode += [[Command.ELLIPSE, (15, 10)]]
+        self.robot_mode += [[Command.FLOWER, (20, 10)]]
         # self.robot_mode += [[Command.MOVE_VECTOR, (5, 0)], [Command.MOVE_VECTOR, (0, 5)], [Command.MOVE_VECTOR, (-5, 0)], [Command.MOVE_VECTOR, (0, -5)]]
         # self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
         # self.robot_mode += [[Command.MOVE_VECTOR, (10, 0)], [Command.MOVE_VECTOR, (0, 10)], [Command.MOVE_VECTOR, (-10, 0)], [Command.MOVE_VECTOR, (0, -10)]]
@@ -143,10 +148,14 @@ class FtcGuiApplication(TouchApplication):
         if current_command == Command.TO_MIDDLE_Y:
             print('TO_MIDDLE_Y')
             self.centre_position_y()
-        if current_command == Command.CIRCLE:
-            print('CIRCLE')
+        if current_command == Command.ELLIPSE:
+            print('ELLIPSE')
             radius = list(self.robot_mode[0])[1]
-            self.draw_circle(radius[0], radius[1])
+            self.draw_ellipse(radius[0], radius[1])
+        if current_command == Command.FLOWER:
+            print('FLOWER')
+            radius = list(self.robot_mode[0])[1]
+            self.draw_flower(radius[0], radius[1])
         if current_command == Command.MOVE_VECTOR:
             pos = list(self.robot_mode[0])[1]
             print('MOVE', pos[0], ' / ', pos[1])
@@ -255,7 +264,7 @@ class FtcGuiApplication(TouchApplication):
             self.stop_all()
             self.next_command()
 
-    def draw_circle(self, rad_x, rad_y):
+    def draw_ellipse(self, rad_x, rad_y):
         # draw circle - start at 0/rad_y from centre
         self.reset_counter() # make sure, vector function doesn't decide to stop circle
         if self.alpha <= 2*math.pi:
@@ -263,6 +272,23 @@ class FtcGuiApplication(TouchApplication):
             y_pos_delta = (-math.sin(self.alpha + self.alpha_step) - math.sin(self.alpha)) * rad_y
             self.draw_vector(x_pos_delta, y_pos_delta)
             self.alpha += self.alpha_step
+        else:
+            self.stop_all()
+            self.next_command()
+
+    def draw_flower(self, radius_outside, radius_inside):
+        # draw circle - start at 0/rad_y from centre
+        self.reset_counter()  # make sure, vector function doesn't decide to stop circle
+        if self.beta <= 2 * math.pi:
+            x_pos_delta = (-math.cos(self.alpha + self.alpha_step) - math.cos(self.alpha)) * radius_outside
+            y_pos_delta = (-math.sin(self.alpha + self.alpha_step) - math.sin(self.alpha)) * radius_outside
+            x_pos_delta += (-math.cos(self.beta + self.beta_step) - math.cos(self.beta)) * radius_inside
+            y_pos_delta += (-math.sin(self.beta + self.beta_step) - math.sin(self.beta)) * radius_inside
+            self.draw_vector(x_pos_delta, y_pos_delta)
+            self.alpha += self.alpha_step
+            self.beta += self.beta_step
+            if self.alpha > 2 * math.pi:
+                self.alpha -= 2 * math.pi
         else:
             self.stop_all()
             self.next_command()
